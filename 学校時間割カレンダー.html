@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>学校時間割カレンダー</title>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic UI',sans-serif;
+  background:#F1F3F4;min-height:100vh;color:#202124;font-size:14px;line-height:1.5}
+a{color:#1967D2}
+
+/* ── Header ── */
+.hdr{background:#fff;border-bottom:1px solid #DADCE0;padding:0 20px;display:flex;
+  align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:20;gap:12px}
+.hdr-logo{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:500;color:#202124;white-space:nowrap}
+.g-btn{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:4px;
+  border:1px solid #DADCE0;background:#fff;cursor:pointer;font-size:13px;font-weight:500;
+  color:#3c4043;transition:.15s;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.g-btn:hover{background:#F8F9FA;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.g-btn.on{background:#E8F0FE;border-color:#C5D9FF;color:#1558B0}
+.g-btn.on:hover{background:#D3E3FD}
+
+/* ── Layout ── */
+.app{max-width:1040px;margin:0 auto;padding:24px 16px 80px}
+
+/* ── Setup banner ── */
+.setup{background:#fff;border-radius:8px;border:1px solid #DADCE0;padding:20px;margin-bottom:20px}
+.setup h2{font-size:15px;font-weight:500;color:#202124;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.cid-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#cidInput{flex:1;min-width:260px;border:1px solid #DADCE0;border-radius:4px;padding:8px 10px;
+  font-size:13px;outline:none;color:#202124;transition:.15s}
+#cidInput:focus{border-color:#1967D2;box-shadow:0 0 0 2px rgba(25,103,210,.12)}
+.btn-save{padding:8px 18px;background:#1967D2;color:#fff;border:none;border-radius:4px;
+  font-size:13px;font-weight:500;cursor:pointer}.btn-save:hover{background:#1558B0}
+.steps{background:#F8F9FA;border-radius:6px;padding:14px 16px;margin-top:12px;
+  font-size:12px;color:#5F6368;line-height:2.1}
+.steps code{background:#E8EAED;padding:1px 5px;border-radius:3px;font-family:monospace;font-size:11px}
+.steps strong{color:#202124}
+.notice{background:#FEF7E0;border-left:3px solid #F9AB00;border-radius:0 6px 6px 0;
+  padding:10px 14px;font-size:12px;color:#5F6368;line-height:1.8;margin-top:10px}
+
+/* ── Login gate ── */
+.login-gate{text-align:center;padding:56px 20px;background:#fff;border-radius:8px;border:1px solid #DADCE0}
+.login-gate h2{font-size:18px;font-weight:500;margin-bottom:8px}
+.login-gate p{font-size:14px;color:#5F6368;margin-bottom:24px}
+.g-btn-big{display:inline-flex;align-items:center;gap:12px;padding:12px 28px;
+  border-radius:4px;border:1px solid #DADCE0;background:#fff;cursor:pointer;font-size:15px;
+  font-weight:500;color:#3c4043;box-shadow:0 1px 3px rgba(0,0,0,.12);transition:.15s}
+.g-btn-big:hover{box-shadow:0 2px 6px rgba(0,0,0,.18);background:#F8F9FA}
+
+/* ── Tabs ── */
+.tabs{display:flex;border-bottom:2px solid #DADCE0;margin-bottom:18px}
+.tab{padding:10px 24px;font-size:14px;border:none;background:none;cursor:pointer;
+  color:#5F6368;border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;transition:.15s}
+.tab.active{color:#1967D2;border-bottom-color:#1967D2}
+.tab:hover:not(.active){background:#F8F9FA;border-radius:4px 4px 0 0}
+
+/* ── Card ── */
+.card{background:#fff;border-radius:8px;border:1px solid #DADCE0;padding:20px;margin-bottom:14px}
+.card-title{font-size:15px;font-weight:500;margin-bottom:16px;color:#202124;display:flex;align-items:center;gap:8px}
+.badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:10px;
+  background:#E8F0FE;color:#1967D2;margin-left:4px}
+
+/* ── Form row ── */
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.field{display:flex;align-items:center;gap:6px}
+.field label{font-size:13px;color:#5F6368;white-space:nowrap}
+input[type=date],select{border:1px solid #DADCE0;border-radius:4px;padding:7px 10px;
+  font-size:13px;outline:none;background:#fff;color:#202124;transition:.15s}
+input[type=date]:focus,select:focus{border-color:#1967D2;box-shadow:0 0 0 2px rgba(25,103,210,.12)}
+.btn-out{padding:8px 16px;border-radius:4px;border:1px solid #1967D2;background:#fff;
+  color:#1967D2;font-size:13px;font-weight:500;cursor:pointer;transition:.15s}
+.btn-out:hover{background:#F0F4FF}
+
+/* ── Global class presets ── */
+.class-preset-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.class-preset-bar label{font-size:13px;color:#5F6368;white-space:nowrap}
+#globalClass{min-width:120px}
+.btn-fill{padding:6px 14px;border-radius:4px;border:1px solid #34A853;background:#fff;
+  color:#137333;font-size:12px;font-weight:500;cursor:pointer;transition:.15s}
+.btn-fill:hover{background:#E6F4EA}
+.preset-chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:4px 10px;border-radius:12px;border:1px solid #DADCE0;background:#F8F9FA;
+  font-size:12px;color:#5F6368;cursor:pointer;transition:.15s;white-space:nowrap}
+.chip:hover{background:#E8F0FE;border-color:#C5D9FF;color:#1967D2}
+
+/* ── Timetable ── */
+.tt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.tt{width:100%;border-collapse:collapse;font-size:12px}
+table.tt th,table.tt td{border:1px solid #DADCE0;padding:0;text-align:center;vertical-align:middle}
+table.tt thead th{background:#F8F9FA;font-weight:500;color:#5F6368;font-size:11px;
+  white-space:nowrap;padding:6px 2px}
+th.sat{color:#1967D2}
+.pcell{min-width:72px;width:72px;padding:4px!important;background:#F8F9FA}
+.pn{font-size:11px;font-weight:500;color:#202124}
+.pt{font-size:10px;color:#9AA0A6;white-space:nowrap}
+
+/* ── Cell with subject + class ── */
+.tt-cell{display:flex;flex-direction:column;gap:0;min-width:88px}
+.tt-cell input{border:none;background:transparent;text-align:center;width:100%;
+  outline:none;box-sizing:border-box;line-height:1.3}
+.tt-cell input.sub{font-size:12px;font-weight:500;color:#202124;padding:5px 3px 2px;
+  border-bottom:1px solid #F1F3F4}
+.tt-cell input.cls{font-size:10px;color:#1967D2;padding:2px 3px 4px}
+.tt-cell input::placeholder{color:#DADCE0;font-weight:400}
+.tt-cell input.cls::placeholder{color:#DADCE0}
+.tt-cell:focus-within{background:#F0F4FF}
+tr.pm td:not(.pcell) .tt-cell{background:transparent}
+tr.pm td:not(.pcell){background:#FAFBFF}
+tr.pm td:not(.pcell) .tt-cell:focus-within{background:#EEF0FF}
+.sat-off{background:#F8F9FA!important}
+.sat-off-inner{display:flex;align-items:center;justify-content:center;
+  height:52px;color:#DADCE0;font-size:11px}
+tr.sep td{height:4px;background:#F1F3F4;border:none}
+
+/* ── Legend ── */
+.legend{display:flex;align-items:center;gap:16px;margin-bottom:12px;font-size:12px;color:#5F6368}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:10px;height:10px;border-radius:2px}
+
+/* ── Exam grid ── */
+.exam-day{border:1px solid #DADCE0;border-radius:6px;overflow:hidden;margin-bottom:8px}
+.exam-hdr{background:#F8F9FA;padding:7px 14px;font-size:13px;font-weight:500;
+  border-bottom:1px solid #DADCE0;color:#202124}
+.exam-rows{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:600px){.exam-rows{grid-template-columns:1fr}}
+.exam-cell{padding:6px 10px;display:flex;align-items:center;gap:6px;
+  border-bottom:1px solid #F1F3F4;border-right:1px solid #F1F3F4}
+.exam-cell:nth-child(2n){border-right:none}
+.exam-cell.pm-c{background:#FAFBFF}
+.ep-l{font-size:11px;color:#5F6368;white-space:nowrap;min-width:128px}
+.exam-inputs{display:flex;flex-direction:column;flex:1;min-width:0;gap:2px}
+input.ex-sub{border:1px solid #DADCE0;border-radius:3px 3px 0 0;padding:4px 7px;font-size:12px;
+  font-weight:500;width:100%;outline:none;background:#fff;color:#202124;transition:.15s}
+input.ex-cls{border:1px solid #DADCE0;border-top:none;border-radius:0 0 3px 3px;
+  padding:3px 7px;font-size:10px;width:100%;outline:none;background:#fff;color:#1967D2;transition:.15s}
+input.ex-sub:focus,input.ex-cls:focus{border-color:#1967D2}
+input.ex-sub::placeholder,input.ex-cls::placeholder{color:#DADCE0;font-weight:400}
+.empty-box{text-align:center;padding:2rem;color:#80868B;font-size:13px;
+  border:2px dashed #DADCE0;border-radius:6px}
+
+/* ── Action bar ── */
+.action-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-top:16px;padding-top:14px;border-top:1px solid #F1F3F4}
+.cal-btn{padding:10px 22px;font-size:13px;border-radius:4px;border:none;
+  background:#1967D2;color:#fff;cursor:pointer;font-weight:500;transition:.15s;
+  display:flex;align-items:center;gap:8px;white-space:nowrap}
+.cal-btn:hover{background:#1558B0}
+.cal-btn:disabled{background:#DADCE0;color:#80868B;cursor:not-allowed}
+.prog-wrap{flex:1;min-width:160px}
+.prog-bar{height:4px;background:#E8EAED;border-radius:2px;overflow:hidden;margin-bottom:4px}
+.prog-fill{height:100%;background:#1967D2;border-radius:2px;width:0;transition:width .2s}
+.prog-txt{font-size:12px;color:#5F6368}
+.ok{font-size:13px;color:#137333}.er{font-size:13px;color:#D93025}
+.hint{font-size:12px;color:#9AA0A6;margin-top:8px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="#1967D2">
+      <path d="M19 4h-1V2h-2v2H8V2H6v2H5C3.9 4 3 4.9 3 6v14c0 1.1.9 2 2 2h14
+               c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h2v2H7zm4
+               0h2v2h-2zm4 0h2v2h-2zM7 14h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
+    </svg>
+    学校時間割カレンダー
+  </div>
+  <button class="g-btn" id="authBtn" onclick="handleAuth()">
+    <svg width="16" height="16" viewBox="0 0 24 24">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21
+               3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71
+               1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43
+               8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1
+               7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+    <span id="authTxt">Googleでログイン</span>
+  </button>
+</div>
+
+<div class="app">
+
+  <!-- ADMIN SETUP -->
+  <div class="setup" id="setupBanner">
+    <h2>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#F9AB00">
+        <path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2V9h2v3z"/>
+      </svg>
+      管理者設定：Google Client ID を入力してください
+    </h2>
+    <div class="cid-row">
+      <input type="text" id="cidInput" placeholder="例: 123456789-abcdefg.apps.googleusercontent.com">
+      <button class="btn-save" onclick="saveClientId()">保存して起動</button>
+    </div>
+    <div class="steps">
+      <strong>📋 管理者が1回だけ行う設定（所要5分）</strong><br>
+      ① <a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank">Google Cloud Console</a>
+         でプロジェクト作成 → 「Google Calendar API」を有効にする<br>
+      ② 「OAuth 同意画面」→ 外部 → アプリ名・サポートメール・デベロッパーメールを入力して保存<br>
+      ③ 「認証情報」→「認証情報を作成」→「OAuth クライアント ID」→ <strong>ウェブアプリケーション</strong><br>
+      ④ 「承認済みの JavaScript オリジン」にこのページのURLを追加<br>
+      &nbsp;&nbsp;&nbsp;ローカル: <code>http://localhost:8080</code>　公開URL: <code>https://your-school.github.io</code><br>
+      ⑤ クライアント IDをコピーして上の欄に貼り付け → 「保存して起動」
+    </div>
+    <div class="notice">
+      <strong>🏫 全校でシェアする場合：</strong>
+      HTMLを <a href="https://pages.github.com" target="_blank">GitHub Pages</a> 等に公開 → URLを承認済みオリジンに追加。
+      Client ID 1つで全員が使えます。生徒はURLを開いて「Googleでログイン」ボタンを押すだけ。
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="mainWrap" style="display:none">
+
+    <!-- Login gate -->
+    <div class="login-gate" id="loginGate">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="#DADCE0" style="margin-bottom:14px">
+        <path d="M19 4h-1V2h-2v2H8V2H6v2H5C3.9 4 3 4.9 3 6v14c0 1.1.9 2 2 2h14c1.1 0 2-.9
+                 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z
+                 M7 14h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
+      </svg>
+      <h2>Googleアカウントでログイン</h2>
+      <p>ログイン後、ワンクリックでGoogleカレンダーに時間割を追加できます</p>
+      <button class="g-btn-big" onclick="handleAuth()">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04
+                   2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23
+                   1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99
+                   20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18
+                   C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1
+                   12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Googleでログイン
+      </button>
+    </div>
+
+    <!-- Timetable UI -->
+    <div id="ttWrap" style="display:none">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('norm')">通常時間割</button>
+        <button class="tab" onclick="switchTab('exam')">考査期間</button>
+      </div>
+
+      <!-- ── Normal ── -->
+      <div id="tabNorm">
+        <div class="card">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#1967D2">
+              <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-2 .89-2 2L3 19c0 1.1.89
+                       2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+            </svg>
+            通常時間割の登録
+            <span class="badge">毎週繰り返し</span>
+          </div>
+
+          <!-- Date range -->
+          <div class="row">
+            <div class="field"><label>開始日</label><input type="date" id="nS"></div>
+            <div class="field"><label>終了日</label><input type="date" id="nE"></div>
+          </div>
+
+          <!-- Class preset fill -->
+          <div class="class-preset-bar">
+            <label>クラス一括入力</label>
+            <input type="text" id="globalClass" placeholder="例: 1年A組"
+              style="border:1px solid #DADCE0;border-radius:4px;padding:6px 10px;font-size:13px;outline:none;width:130px"
+              onfocus="this.style.borderColor='#1967D2'" onblur="this.style.borderColor='#DADCE0'">
+            <button class="btn-fill" onclick="fillAllClass()">空欄を一括入力</button>
+            <div class="preset-chips" id="presetChips"></div>
+          </div>
+
+          <!-- Legend -->
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#202124;border:1px solid #DADCE0"></div>
+              <span>科目名</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#E8F0FE;border:1px solid #C5D9FF"></div>
+              <span style="color:#1967D2">クラス</span>
+            </div>
+          </div>
+
+          <div class="tt-scroll">
+            <table class="tt">
+              <thead>
+                <tr>
+                  <th class="pcell">時限</th>
+                  <th>月</th><th>火</th><th>水</th><th>木</th><th>金</th>
+                  <th class="sat">土</th>
+                </tr>
+              </thead>
+              <tbody id="nBody"></tbody>
+            </table>
+          </div>
+
+          <div class="action-bar">
+            <button class="cal-btn" id="normBtn" onclick="normAction()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                <path d="M19 4h-1V2h-2v2H8V2H6v2H5C3.9 4 3 4.9 3 6v14c0 1.1.9 2 2 2h14
+                         c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h2v2H7zm4
+                         0h2v2h-2zm4 0h2v2h-2zM7 14h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
+              </svg>
+              Googleカレンダーに追加
+            </button>
+            <div class="prog-wrap" id="nPW" style="display:none">
+              <div class="prog-bar"><div class="prog-fill" id="nPF"></div></div>
+              <div class="prog-txt" id="nPT"></div>
+            </div>
+            <span id="nSt"></span>
+          </div>
+          <p class="hint">
+            上段：科目名　下段（青）：クラス。クラス名はカレンダーの説明欄に記載されます。
+            空欄のコマはスキップ。入力内容はブラウザに自動保存されます。
+          </p>
+        </div>
+      </div>
+
+      <!-- ── Exam ── -->
+      <div id="tabExam" style="display:none">
+        <div class="card">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#1967D2">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+            </svg>
+            考査期間の登録
+            <span class="badge">1回限り</span>
+          </div>
+          <div class="row">
+            <div class="field"><label>考査期間</label><input type="date" id="eS"></div>
+            <div class="field"><label>〜</label><input type="date" id="eE"></div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>4時限 終了</label>
+              <select id="p4e">
+                <option value="12:50">12:50（通常）</option>
+                <option value="12:40">12:40（短縮）</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>午後授業</label>
+              <select id="pmO">
+                <option value="yes">あり（13:15〜15:35）</option>
+                <option value="no">なし</option>
+              </select>
+            </div>
+            <button class="btn-out" onclick="buildExam()">日程を作成</button>
+          </div>
+          <div id="eGrid"><div class="empty-box">期間と設定を選んで「日程を作成」を押してください</div></div>
+          <div class="action-bar">
+            <button class="cal-btn" id="examBtn" onclick="examAction()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                <path d="M19 4h-1V2h-2v2H8V2H6v2H5C3.9 4 3 4.9 3 6v14c0 1.1.9 2 2 2h14
+                         c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h2v2H7zm4
+                         0h2v2h-2zm4 0h2v2h-2zM7 14h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
+              </svg>
+              Googleカレンダーに追加
+            </button>
+            <div class="prog-wrap" id="ePW" style="display:none">
+              <div class="prog-bar"><div class="prog-fill" id="ePF"></div></div>
+              <div class="prog-txt" id="ePT"></div>
+            </div>
+            <span id="eSt"></span>
+          </div>
+          <p class="hint">上段：科目名　下段（青）：クラス。タイトルは「【考査】科目名」、クラスは説明欄に記載されます。</p>
+        </div>
+      </div>
+
+    </div><!-- /ttWrap -->
+  </div><!-- /mainWrap -->
+</div><!-- /app -->
+
+<script>
+// ── Data ─────────────────────────────────────────────────────
+const NP=[
+  {id:1,s:'08:50',e:'09:35',l:'1時限',am:1},{id:2,s:'09:45',e:'10:30',l:'2時限',am:1},
+  {id:3,s:'10:40',e:'11:25',l:'3時限',am:1},{id:4,s:'11:35',e:'12:20',l:'4時限',am:1},
+  {id:5,s:'13:00',e:'13:45',l:'5時限',am:0},{id:6,s:'13:55',e:'14:40',l:'6時限',am:0},
+  {id:7,s:'14:50',e:'15:35',l:'7時限',am:0},{id:8,s:'15:45',e:'16:30',l:'8時限',am:0},
+];
+const DD=['月','火','水','木','金','土'],DOW=[1,2,3,4,5,6],RD=['MO','TU','WE','TH','FR','SA'];
+const EP_AM=[
+  {id:'e1',s:'08:45',e:'09:35',l:'1時限（8:45〜9:35）',pm:0},
+  {id:'e2',s:'09:50',e:'10:40',l:'2時限（9:50〜10:40）',pm:0},
+  {id:'e3',s:'10:55',e:'11:45',l:'3時限（10:55〜11:45）',pm:0},
+];
+const EP4={
+  '12:50':{id:'e4',s:'12:00',e:'12:50',l:'4時限（12:00〜12:50）',pm:0},
+  '12:40':{id:'e4',s:'12:00',e:'12:40',l:'4時限（12:00〜12:40）',pm:0},
+};
+const EP_PM=[
+  {id:'e5',s:'13:15',e:'13:55',l:'午後1（13:15〜13:55）',pm:1},
+  {id:'e6',s:'14:05',e:'14:45',l:'午後2（14:05〜14:45）',pm:1},
+  {id:'e7',s:'14:55',e:'15:35',l:'午後3（14:55〜15:35）',pm:1},
+];
+const DJP=['日','月','火','水','木','金','土'];
+
+// ── Preset class chips ────────────────────────────────────────
+const CLASS_PRESETS=['1年A組','1年B組','1年C組','2年A組','2年B組','2年C組','3年A組','3年B組','3年C組'];
+(function buildChips(){
+  const bar=document.getElementById('presetChips');
+  CLASS_PRESETS.forEach(c=>{
+    const chip=document.createElement('button');
+    chip.className='chip';chip.textContent=c;
+    chip.onclick=()=>{document.getElementById('globalClass').value=c;};
+    bar.appendChild(chip);
+  });
+})();
+
+function fillAllClass(){
+  const cls=document.getElementById('globalClass').value.trim();
+  if(!cls)return;
+  // save to preset list
+  if(!CLASS_PRESETS.includes(cls)){
+    CLASS_PRESETS.push(cls);
+    const chip=document.createElement('button');
+    chip.className='chip';chip.textContent=cls;
+    chip.onclick=()=>{document.getElementById('globalClass').value=cls;};
+    document.getElementById('presetChips').appendChild(chip);
+  }
+  // fill all empty class fields
+  document.querySelectorAll('input.cls').forEach(inp=>{
+    if(!inp.value){
+      inp.value=cls;
+      const key=inp.dataset.key;
+      if(key)localStorage.setItem(key,cls);
+    }
+  });
+}
+
+// ── Auth ──────────────────────────────────────────────────────
+let tc=null,tok=null,pendRes=null,pendRej=null;
+
+function initGIS(cid){
+  if(!window.google?.accounts?.oauth2){setTimeout(()=>initGIS(cid),300);return;}
+  tc=google.accounts.oauth2.initTokenClient({
+    client_id:cid,
+    scope:'https://www.googleapis.com/auth/calendar.events',
+    callback:(r)=>{
+      if(r.error){updateAuthUI(false);if(pendRej){pendRej(r.error);pendRej=null;pendRes=null;}return;}
+      tok=r.access_token;
+      setTimeout(()=>{tok=null;updateAuthUI(false);},(r.expires_in||3600-60)*1000);
+      updateAuthUI(true);
+      if(pendRes){pendRes(tok);pendRes=null;pendRej=null;}
+    }
+  });
+}
+function handleAuth(){
+  if(!tc){alert('Client IDを設定してください');return;}
+  if(tok){google.accounts.oauth2.revoke(tok,()=>{});tok=null;updateAuthUI(false);return;}
+  tc.requestAccessToken({prompt:'select_account'});
+}
+function updateAuthUI(on){
+  document.getElementById('authBtn').className='g-btn'+(on?' on':'');
+  document.getElementById('authTxt').textContent=on?'ログアウト':'Googleでログイン';
+  document.getElementById('loginGate').style.display=on?'none':'';
+  document.getElementById('ttWrap').style.display=on?'':'none';
+}
+function getToken(){
+  return new Promise((res,rej)=>{
+    if(tok){res(tok);return;}
+    pendRes=res;pendRej=rej;tc.requestAccessToken({prompt:''});
+  });
+}
+
+// ── Setup ─────────────────────────────────────────────────────
+function saveClientId(){
+  const v=document.getElementById('cidInput').value.trim();
+  if(!v){alert('Client IDを入力してください');return;}
+  localStorage.setItem('gcal_cid',v);bootWithCid(v);
+}
+function bootWithCid(cid){
+  document.getElementById('setupBanner').style.display='none';
+  document.getElementById('mainWrap').style.display='';
+  initGIS(cid);
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+const p2=n=>String(n).padStart(2,'0');
+function firstWD(startStr,targetDow){
+  const[y,m,d]=startStr.split('-').map(Number);
+  const dt=new Date(y,m-1,d);
+  let df=targetDow-dt.getDay();if(df<0)df+=7;
+  dt.setDate(dt.getDate()+df);
+  return `${dt.getFullYear()}-${p2(dt.getMonth()+1)}-${p2(dt.getDate())}`;
+}
+function calcUntil(endStr){
+  const[y,m,d]=endStr.split('-').map(Number);
+  return `${y}${p2(m)}${p2(d)}T150000Z`;
+}
+function makeEvent(summary,cls,startDT,endDT,rrule){
+  const ev={
+    summary,
+    start:{dateTime:startDT,timeZone:'Asia/Tokyo'},
+    end:  {dateTime:endDT,  timeZone:'Asia/Tokyo'},
+  };
+  if(cls)ev.description=`クラス: ${cls}`;
+  if(rrule)ev.recurrence=[rrule];
+  return ev;
+}
+async function postEvent(ev){
+  const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{
+    method:'POST',
+    headers:{'Authorization':`Bearer ${tok}`,'Content-Type':'application/json'},
+    body:JSON.stringify(ev)
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||r.status);}
+}
+async function runEvents(evs,pfId,ptId,pwId,btnId,stId){
+  const pf=document.getElementById(pfId),pt=document.getElementById(ptId);
+  const pw=document.getElementById(pwId),btn=document.getElementById(btnId);
+  const st=document.getElementById(stId);
+  pw.style.display='';btn.disabled=true;st.innerHTML='';
+  let ok=0,er=0;
+  for(let i=0;i<evs.length;i++){
+    try{await postEvent(evs[i]);ok++;}catch{er++;}
+    pf.style.width=`${Math.round((i+1)/evs.length*100)}%`;
+    pt.textContent=`${i+1} / ${evs.length} 件追加中…`;
+    await new Promise(r=>setTimeout(r,100));
+  }
+  pw.style.display='none';btn.disabled=false;
+  st.innerHTML=er===0
+    ?`<span class="ok">✓ ${ok} 件をGoogleカレンダーに追加しました</span>`
+    :`<span class="ok">✓ ${ok} 件追加</span>&nbsp;<span class="er">/ ${er} 件失敗</span>`;
+}
+
+// ── Build normal timetable grid ───────────────────────────────
+(function buildNorm(){
+  const tb=document.getElementById('nBody');
+  NP.forEach((p,pi)=>{
+    if(pi===4){
+      const r=document.createElement('tr');r.className='sep';
+      r.innerHTML=`<td colspan="7" style="height:4px;background:#F1F3F4;border:none"></td>`;
+      tb.appendChild(r);
+    }
+    const row=document.createElement('tr');if(!p.am)row.className='pm';
+    // Period label cell
+    const tl=document.createElement('td');tl.className='pcell';
+    tl.innerHTML=`<div class="pn">${p.l}</div><div class="pt">${p.s}〜${p.e}</div>`;
+    row.appendChild(tl);
+    DD.forEach((_,di)=>{
+      const td=document.createElement('td');
+      if(!p.am&&di===5){
+        td.className='sat-off';
+        td.innerHTML='<div class="sat-off-inner">—</div>';
+      } else {
+        const keyS=`tt_s_${p.id}_${di}`;
+        const keyC=`tt_c_${p.id}_${di}`;
+        const wrap=document.createElement('div');wrap.className='tt-cell';
+        // Subject input
+        const iSub=document.createElement('input');
+        iSub.type='text';iSub.className='sub';iSub.placeholder='科目名';
+        iSub.id=`ns_${p.id}_${di}`;iSub.dataset.key=keyS;
+        iSub.value=localStorage.getItem(keyS)||'';
+        iSub.addEventListener('input',()=>localStorage.setItem(keyS,iSub.value));
+        // Class input
+        const iCls=document.createElement('input');
+        iCls.type='text';iCls.className='cls';iCls.placeholder='クラス';
+        iCls.id=`nc_${p.id}_${di}`;iCls.dataset.key=keyC;
+        iCls.value=localStorage.getItem(keyC)||'';
+        iCls.addEventListener('input',()=>localStorage.setItem(keyC,iCls.value));
+        wrap.appendChild(iSub);wrap.appendChild(iCls);
+        td.appendChild(wrap);
+      }
+      row.appendChild(td);
+    });
+    tb.appendChild(row);
+  });
+})();
+
+async function normAction(){
+  const s=document.getElementById('nS').value,e=document.getElementById('nE').value;
+  const st=document.getElementById('nSt');st.innerHTML='';
+  if(!s||!e){st.innerHTML='<span class="er">開始日と終了日を入力してください</span>';return;}
+  if(new Date(s)>new Date(e)){st.innerHTML='<span class="er">終了日は開始日より後にしてください</span>';return;}
+  const un=calcUntil(e),evs=[];
+  NP.forEach(p=>DD.forEach((_,di)=>{
+    if(!p.am&&di===5)return;
+    const subj=(document.getElementById(`ns_${p.id}_${di}`)?.value||'').trim();
+    const cls =(document.getElementById(`nc_${p.id}_${di}`)?.value||'').trim();
+    if(!subj)return;
+    const ds=firstWD(s,DOW[di]);
+    evs.push(makeEvent(
+      subj,cls,
+      `${ds}T${p.s}:00`,`${ds}T${p.e}:00`,
+      `RRULE:FREQ=WEEKLY;BYDAY=${RD[di]};UNTIL=${un}`
+    ));
+  }));
+  if(!evs.length){st.innerHTML='<span class="er">科目名を1つ以上入力してください</span>';return;}
+  try{await getToken();}catch(err){st.innerHTML=`<span class="er">認証エラー: ${err}</span>`;return;}
+  await runEvents(evs,'nPF','nPT','nPW','normBtn','nSt');
+}
+
+// ── Exam ──────────────────────────────────────────────────────
+let eDates=[];
+function buildExam(){
+  const s=document.getElementById('eS').value,e=document.getElementById('eE').value;
+  const p4=EP4[document.getElementById('p4e').value];
+  const hasPm=document.getElementById('pmO').value==='yes';
+  if(!s||!e){alert('期間を入力してください');return;}
+  const allP=[...EP_AM,p4,...(hasPm?EP_PM:[])];
+  eDates=[];
+  for(let d=new Date(s);d<=new Date(e);d.setDate(d.getDate()+1)){
+    if(d.getDay()===0)continue;
+    eDates.push({ds:`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`,
+      dow:d.getDay(),y:d.getFullYear(),m:d.getMonth()+1,day:d.getDate()});
+  }
+  const g=document.getElementById('eGrid');g.innerHTML='';
+  if(!eDates.length){g.innerHTML='<div class="empty-box">期間内に平日・土曜が見つかりません</div>';return;}
+  eDates.forEach(({ds,dow,y,m,day})=>{
+    const box=document.createElement('div');box.className='exam-day';
+    const hdr=document.createElement('div');hdr.className='exam-hdr';
+    hdr.textContent=`${y}年${m}月${day}日（${DJP[dow]}）`;
+    box.appendChild(hdr);
+    const rows=document.createElement('div');rows.className='exam-rows';
+    allP.forEach(p=>{
+      const cell=document.createElement('div');cell.className='exam-cell'+(p.pm?' pm-c':'');
+      const lbl=document.createElement('span');lbl.className='ep-l';lbl.textContent=p.l;
+      const wrap=document.createElement('div');wrap.className='exam-inputs';
+      const iSub=document.createElement('input');
+      iSub.type='text';iSub.className='ex-sub';iSub.placeholder='科目名';iSub.id=`es_${ds}_${p.id}`;
+      const iCls=document.createElement('input');
+      iCls.type='text';iCls.className='ex-cls';iCls.placeholder='クラス';iCls.id=`ec_${ds}_${p.id}`;
+      wrap.appendChild(iSub);wrap.appendChild(iCls);
+      cell.appendChild(lbl);cell.appendChild(wrap);rows.appendChild(cell);
+    });
+    box.appendChild(rows);g.appendChild(box);
+  });
+}
+
+async function examAction(){
+  const p4=EP4[document.getElementById('p4e').value];
+  const hasPm=document.getElementById('pmO').value==='yes';
+  const allP=[...EP_AM,p4,...(hasPm?EP_PM:[])];
+  const st=document.getElementById('eSt');st.innerHTML='';
+  if(!eDates.length){st.innerHTML='<span class="er">先に「日程を作成」を押してください</span>';return;}
+  const evs=[];
+  eDates.forEach(({ds,y,m,day})=>allP.forEach(p=>{
+    const subj=(document.getElementById(`es_${ds}_${p.id}`)?.value||'').trim();
+    const cls =(document.getElementById(`ec_${ds}_${p.id}`)?.value||'').trim();
+    if(!subj)return;
+    evs.push(makeEvent(
+      `【考査】${subj}`,cls,
+      `${y}-${p2(m)}-${p2(day)}T${p.s}:00`,
+      `${y}-${p2(m)}-${p2(day)}T${p.e}:00`,
+      null
+    ));
+  }));
+  if(!evs.length){st.innerHTML='<span class="er">科目名を入力してください</span>';return;}
+  try{await getToken();}catch(err){st.innerHTML=`<span class="er">認証エラー: ${err}</span>`;return;}
+  await runEvents(evs,'ePF','ePT','ePW','examBtn','eSt');
+}
+
+// ── Tab + Init ────────────────────────────────────────────────
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>
+    b.classList.toggle('active',(i===0&&t==='norm')||(i===1&&t==='exam'))
+  );
+  document.getElementById('tabNorm').style.display=t==='norm'?'':'none';
+  document.getElementById('tabExam').style.display=t==='exam'?'':'none';
+}
+
+(function init(){
+  const cid=localStorage.getItem('gcal_cid');
+  if(cid){document.getElementById('cidInput').value=cid;bootWithCid(cid);}
+  const today=new Date(),fmt=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+  const ns=new Date(today);ns.setDate(ns.getDate()+((8-ns.getDay())%7||7));
+  const ne=new Date(ns);ne.setMonth(ne.getMonth()+4);
+  document.getElementById('nS').value=fmt(ns);
+  document.getElementById('nE').value=fmt(ne);
+  const es=new Date(today);es.setMonth(es.getMonth()+2);
+  const ee=new Date(es);ee.setDate(ee.getDate()+14);
+  document.getElementById('eS').value=fmt(es);
+  document.getElementById('eE').value=fmt(ee);
+})();
+</script>
+</body>
+</html>
