@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ひらがなあそび</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fff8e7;
+  --card: #ffffff;
+  --ink: #3b3b58;
+  --muted: #8a8aa6;
+  --accent: #ff8a65;
+  --good: #66bb6a;
+  --bad: #ef9a9a;
+  --shadow: rgba(59, 59, 88, 0.15);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1f2233;
+    --card: #2b2f45;
+    --ink: #f4f1ff;
+    --muted: #a7aacb;
+    --accent: #ffab91;
+    --good: #81c784;
+    --bad: #e57373;
+    --shadow: rgba(0, 0, 0, 0.4);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1f2233;
+  --card: #2b2f45;
+  --ink: #f4f1ff;
+  --muted: #a7aacb;
+  --accent: #ffab91;
+  --good: #81c784;
+  --bad: #e57373;
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap { max-width: 560px; margin: 0 auto; padding: 16px; }
+header { display: flex; justify-content: space-between; align-items: center; }
+h1 { font-size: 1.5rem; margin: 8px 0; }
+.stars {
+  font-size: 1.3rem;
+  font-weight: 900;
+  background: var(--card);
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 2px 0 var(--shadow);
+}
+.screen { display: none; }
+.screen.active { display: block; }
+.hint { text-align: center; color: var(--muted); margin: 0 0 8px; }
+
+.big-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  background: var(--card);
+  border-radius: 28px;
+  box-shadow: 0 6px 0 var(--shadow);
+  padding: 20px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  transition: transform 0.1s;
+}
+.big-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--shadow); }
+.big-btn .icon { font-size: 3.5rem; }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0 24px; }
+
+.worlds { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.chip {
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 3px 0 var(--shadow);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.chip[aria-pressed="true"] { background: var(--accent); color: #fff; }
+
+.back { font-size: 1.1rem; font-weight: 700; padding: 8px 4px; color: var(--muted); }
+
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+.card {
+  position: relative;
+  background: var(--card);
+  border-radius: 24px;
+  box-shadow: 0 5px 0 var(--shadow);
+  padding: 14px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.card .kana { font-size: 2.6rem; font-weight: 900; line-height: 1.1; }
+.card .emo { font-size: 2rem; line-height: 1.2; }
+.card .word { font-size: 0.95rem; color: var(--muted); }
+.card .done { position: absolute; top: 6px; right: 10px; font-size: 1rem; }
+.card.pop, .quiz-pic.pop { animation: pop 0.45s; }
+
+.quiz-pic {
+  text-align: center;
+  background: var(--card);
+  border-radius: 32px;
+  box-shadow: 0 6px 0 var(--shadow);
+  padding: 24px 16px 16px;
+  margin-top: 12px;
+}
+.quiz-pic .emo { font-size: 7rem; line-height: 1.1; display: block; }
+.quiz-pic .word { font-size: 1.2rem; color: var(--muted); }
+.replay {
+  margin-top: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 8px 18px;
+}
+.choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+.choice {
+  background: var(--card);
+  border-radius: 28px;
+  box-shadow: 0 6px 0 var(--shadow);
+  aspect-ratio: 1;
+  font-size: 4rem;
+  font-weight: 900;
+}
+.choice:disabled { opacity: 0.45; }
+.choice.right { background: var(--good); color: #fff; }
+.choice.wrong { background: var(--bad); }
+.choice.shake { animation: shake 0.4s; }
+#feedback { text-align: center; font-size: 1.4rem; font-weight: 900; min-height: 2em; margin: 12px 0 0; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ひらがなあそび</h1>
+    <div class="stars">⭐ <span id="stars">0</span></div>
+  </header>
+
+  <section id="home" class="screen active">
+    <div class="modes">
+      <button class="big-btn" data-go="learn"><span class="icon">📖</span>おぼえる</button>
+      <button class="big-btn" data-go="quiz"><span class="icon">🎮</span>あそぶ</button>
+    </div>
+    <p class="hint">すきなせかいをえらんでね</p>
+    <div class="worlds" id="worlds"></div>
+  </section>
+
+  <section id="learn" class="screen">
+    <button class="back" data-go="home">← もどる</button>
+    <div class="grid" id="learn-grid"></div>
+  </section>
+
+  <section id="quiz" class="screen">
+    <button class="back" data-go="home">← もどる</button>
+    <div class="quiz-pic" id="quiz-pic">
+      <span class="emo" id="q-emo"></span>
+      <span class="word" id="q-word"></span><br>
+      <button class="replay" id="replay">🔊 もういちど</button>
+    </div>
+    <div class="choices" id="choices"></div>
+    <p id="feedback" aria-live="polite"></p>
+  </section>
+</div>
+
+<script>
+const WORLDS = [
+  { id: 'all', label: 'ぜんぶ', emoji: '🌈' },
+  { id: 'sakana', label: 'うみ・さかな', emoji: '🐟' },
+  { id: 'mushi', label: 'むし', emoji: '🐛' },
+  { id: 'kyoryu', label: 'きょうりゅう', emoji: '🦖' },
+  { id: 'other', label: 'いろいろ', emoji: '🐶' },
+];
+
+// [ひらがな, ことば, えもじ, せかい]
+const RAW = [
+  ['あ', 'あり', '🐜', 'mushi'], ['い', 'いか', '🦑', 'sakana'], ['う', 'うみがめ', '🐢', 'sakana'],
+  ['え', 'えび', '🦐', 'sakana'], ['お', 'おさかな', '🐠', 'sakana'],
+  ['か', 'かに', '🦀', 'sakana'], ['き', 'きょうりゅう', '🦖', 'kyoryu'], ['く', 'くじら', '🐳', 'sakana'],
+  ['け', 'けむし', '🐛', 'mushi'], ['こ', 'こうもり', '🦇', 'other'],
+  ['さ', 'さかな', '🐟', 'sakana'], ['し', 'しまうま', '🦓', 'other'], ['す', 'すいか', '🍉', 'other'],
+  ['せ', 'せみ', '🦗', 'mushi'], ['そ', 'そら', '☁️', 'other'],
+  ['た', 'たまご', '🥚', 'kyoryu'], ['ち', 'ちょう', '🦋', 'mushi'], ['つ', 'つばめ', '🐦', 'other'],
+  ['て', 'てんとうむし', '🐞', 'mushi'], ['と', 'とかげ', '🦎', 'kyoryu'],
+  ['な', 'なまず', '🐟', 'sakana'], ['に', 'にじ', '🌈', 'other'], ['ぬ', 'ぬいぐるみ', '🧸', 'other'],
+  ['ね', 'ねこ', '🐱', 'other'], ['の', 'のりもの', '🚗', 'other'],
+  ['は', 'はち', '🐝', 'mushi'], ['ひ', 'ひよこ', '🐤', 'other'], ['ふ', 'ふね', '🚢', 'other'],
+  ['へ', 'へび', '🐍', 'other'], ['ほ', 'ほし', '⭐', 'other'],
+  ['ま', 'まぐろ', '🐟', 'sakana'], ['み', 'みかん', '🍊', 'other'], ['む', 'むし', '🐛', 'mushi'],
+  ['め', 'めだか', '🐟', 'sakana'], ['も', 'もも', '🍑', 'other'],
+  ['や', 'やぎ', '🐐', 'other'], ['ゆ', 'ゆき', '❄️', 'other'], ['よ', 'よる', '🌙', 'other'],
+  ['ら', 'らっこ', '🦦', 'other'], ['り', 'りんご', '🍎', 'other'], ['る', 'るり', '💎', 'other'], ['れ', 'れもん', '🍋', 'other'], ['ろ', 'ろけっと', '🚀', 'other'],
+  ['わ', 'わに', '🐊', 'kyoryu'], ['ん', 'かばん', '🎒', 'other'],
+];
+const CHARS = RAW.map(([kana, word, emoji, world]) => ({ kana, word, emoji, world }));
+
+const $ = (selector) => document.querySelector(selector);
+const rand = (n) => Math.floor(Math.random() * n);
+const shuffle = (a) => {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = rand(i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+const load = (key, fallback) => {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch (e) { return fallback; }
+};
+const save = (key, value) => {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* 保存できない環境では無視 */ }
+};
+
+const state = {
+  world: 'all',
+  stars: load('hiragana.stars', 0),
+  learned: load('hiragana.learned', []),
+};
+
+// 読み上げ（日本語の声があれば使う。なければ何もしない）
+let jaVoice = null;
+function pickVoice() {
+  jaVoice = speechSynthesis.getVoices().find((v) => v.lang.startsWith('ja')) || null;
+}
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ja-JP';
+  u.rate = 0.85;
+  u.pitch = 1.2;
+  if (jaVoice) u.voice = jaVoice;
+  speechSynthesis.speak(u);
+}
+if ('speechSynthesis' in window) {
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+
+// 効果音（音声ファイルを使わず、その場で鳴らす）
+let audioCtx = null;
+function chime(freqs, dur) {
+  try {
+    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+    freqs.forEach((f, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const t = audioCtx.currentTime + i * 0.15;
+      osc.frequency.value = f;
+      osc.connect(gain).connect(audioCtx.destination);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.start(t);
+      osc.stop(t + dur);
+    });
+  } catch (e) { /* 音が出せない環境では無視 */ }
+}
+
+function pool() {
+  return state.world === 'all' ? CHARS : CHARS.filter((c) => c.world === state.world);
+}
+function updateStars() {
+  $('#stars').textContent = state.stars;
+}
+function restartAnimation(el, cls) {
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
+  window.scrollTo(0, 0);
+  if (id === 'learn') renderLearn();
+  if (id === 'quiz') nextQuestion();
+}
+
+// ホーム：せかいえらび
+function renderWorlds() {
+  $('#worlds').innerHTML = WORLDS.map((w) =>
+    `<button class="chip" data-world="${w.id}" aria-pressed="${w.id === state.world}">${w.emoji} ${w.label}</button>`
+  ).join('');
+}
+$('#worlds').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-world]');
+  if (!btn) return;
+  state.world = btn.dataset.world;
+  renderWorlds();
+});
+
+// おぼえる：カードをタップすると読み上げ
+function renderLearn() {
+  $('#learn-grid').innerHTML = pool().map((c, i) => `
+    <button class="card" data-i="${i}">
+      ${state.learned.includes(c.kana) ? '<span class="done">⭐</span>' : ''}
+      <span class="kana">${c.kana}</span>
+      <span class="emo">${c.emoji}</span>
+      <span class="word">${c.word}</span>
+    </button>`).join('');
+}
+$('#learn-grid').addEventListener('click', (e) => {
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const c = pool()[card.dataset.i];
+  speak(`${c.kana}、${c.word}`);
+  restartAnimation(card, 'pop');
+});
+
+// あそぶ：えを見て、おなじひらがなをえらぶ
+let current = null;
+let locked = false;
+function nextQuestion() {
+  const list = pool();
+  current = list[rand(list.length)];
+  const options = [current];
+  while (options.length < 3) {
+    const c = CHARS[rand(CHARS.length)];
+    if (!options.includes(c)) options.push(c);
+  }
+  locked = false;
+  $('#q-emo').textContent = current.emoji;
+  $('#q-word').textContent = current.word;
+  $('#feedback').textContent = '';
+  $('#choices').innerHTML = shuffle(options).map((c) =>
+    `<button class="choice" data-kana="${c.kana}">${c.kana}</button>`
+  ).join('');
+  setTimeout(() => speak(current.word), 300);
+}
+$('#replay').addEventListener('click', () => speak(current.word));
+$('#choices').addEventListener('click', (e) => {
+  const btn = e.target.closest('.choice');
+  if (!btn || locked || btn.disabled) return;
+
+  if (btn.dataset.kana === current.kana) {
+    locked = true;
+    btn.classList.add('right');
+    chime([523, 659, 784], 0.35);
+    state.stars += 1;
+    save('hiragana.stars', state.stars);
+    if (!state.learned.includes(current.kana)) {
+      state.learned.push(current.kana);
+      save('hiragana.learned', state.learned);
+    }
+    updateStars();
+    $('#feedback').textContent = '⭐ すごい！';
+    restartAnimation($('#quiz-pic'), 'pop');
+    speak(`せいかい。${current.kana}、${current.word}`);
+    setTimeout(nextQuestion, 2000);
+  } else {
+    chime([220], 0.3);
+    btn.disabled = true;
+    btn.classList.add('wrong');
+    restartAnimation(btn, 'shake');
+    $('#feedback').textContent = 'もういちど！';
+    speak('もういちど、きいてみてね');
+  }
+});
+
+// 画面の切り替え（data-go を持つボタン）
+document.addEventListener('click', (e) => {
+  const go = e.target.closest('[data-go]');
+  if (go) show(go.dataset.go);
+});
+
+renderWorlds();
+updateStars();
+</script>
+</body>
+</html>
