@@ -114,7 +114,7 @@ h1 { font-size: 1.5rem; margin: 8px 0; }
 }
 .card .kana { font-size: 2.6rem; font-weight: 900; line-height: 1.1; }
 .art { display: block; width: 64px; height: 64px; }
-.art svg { display: block; width: 100%; height: 100%; }
+.art img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .card .word { font-size: 0.95rem; color: var(--muted); }
 .card .done { position: absolute; top: 6px; right: 10px; font-size: 1rem; }
 .card.pop, .quiz-pic.pop { animation: pop 0.45s; }
@@ -204,368 +204,54 @@ const WORLDS = [
   { id: 'other', label: 'いろいろ', emoji: '🐶' },
 ];
 
-// イラスト（SVG）。ひらがなごとに1つずつ描いている
-const ART = (() => {
-  const svg = (body) => `<svg viewBox="0 0 120 120" aria-hidden="true">${body}</svg>`;
-  const eye = (x, y) => `<circle cx="${x}" cy="${y}" r="4.5" fill="#3b3b58"/><circle cx="${x + 1.5}" cy="${y - 1.5}" r="1.5" fill="#fff"/>`;
-  const smile = (x, y) => `<path d="M${x - 6} ${y} Q${x} ${y + 6} ${x + 6} ${y}" stroke="#3b3b58" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
-  const cheek = (x, y) => `<circle cx="${x}" cy="${y}" r="5" fill="#ff8a80" opacity=".45"/>`;
-  const line = (d, c, w = 3) => `<path d="${d}" stroke="${c}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
-
-  const fish = (body, belly, fin, scale = 1, whiskers = false) => svg(`
-    <g transform="translate(60 60) scale(${scale}) translate(-60 -60)">
-      ${whiskers ? line('M98 62 L114 56 M98 66 L114 68', '#5d4037', 2) : ''}
-      <path d="M22 60 L6 44 Q12 60 6 76 Z" fill="${fin}"/>
-      <path d="M50 38 Q62 20 76 38 Z" fill="${fin}"/>
-      <ellipse cx="62" cy="60" rx="42" ry="26" fill="${body}"/>
-      <ellipse cx="66" cy="72" rx="26" ry="9" fill="${belly}"/>
-      ${line('M52 52 Q60 60 52 68', fin)}
-      ${eye(88, 54)}${cheek(80, 66)}
-    </g>`);
-  const bird = (body, wing, beak) => svg(`
-    <path d="M26 66 L4 56 L14 68 L4 82 L26 74 Z" fill="${wing}"/>
-    <ellipse cx="58" cy="66" rx="34" ry="22" fill="${body}"/>
-    <ellipse cx="62" cy="78" rx="22" ry="10" fill="#fff" opacity=".85"/>
-    <path d="M40 60 Q56 36 80 56 Q60 66 40 60 Z" fill="${wing}"/>
-    <circle cx="88" cy="48" r="16" fill="${body}"/>
-    <path d="M100 44 L114 49 L100 54 Z" fill="${beak}"/>
-    ${eye(92, 44)}${cheek(84, 56)}
-    ${line('M54 86 L52 96 M66 86 L68 96', beak)}`);
-
-  const ant = () => svg(`
-    ${line('M50 56 L36 46 M50 66 L34 72 M50 74 L38 88 M70 56 L84 46 M70 66 L86 72 M70 74 L82 88', '#5d4037', 3)}
-    ${line('M26 52 Q20 38 14 36 M30 50 Q34 38 42 36', '#5d4037', 2.5)}
-    <ellipse cx="88" cy="62" rx="20" ry="17" fill="#8d6e63"/>
-    <ellipse cx="60" cy="62" rx="11" ry="10" fill="#8d6e63"/>
-    <circle cx="32" cy="62" r="13" fill="#6d4c41"/>
-    ${eye(28, 58)}${smile(30, 68)}`);
-  const squid = () => svg(`
-    ${line('M44 78 Q40 96 38 106 M52 80 Q50 100 50 110 M60 82 V112 M68 80 Q70 100 70 110 M76 78 Q80 96 82 106', '#f48fb1', 5)}
-    <path d="M60 14 C38 30 34 60 40 78 Q60 88 80 78 C86 60 82 30 60 14 Z" fill="#f48fb1"/>
-    <path d="M40 40 Q24 48 38 62 Z M80 40 Q96 48 82 62 Z" fill="#f8bbd0"/>
-    ${eye(52, 56)}${eye(68, 56)}${cheek(44, 66)}${cheek(76, 66)}${smile(60, 68)}`);
-  const turtle = () => svg(`
-    <ellipse cx="34" cy="80" rx="12" ry="6" fill="#a5d6a7" transform="rotate(-25 34 80)"/>
-    <ellipse cx="86" cy="80" rx="12" ry="6" fill="#a5d6a7" transform="rotate(25 86 80)"/>
-    <ellipse cx="96" cy="56" rx="13" ry="11" fill="#a5d6a7"/>
-    <path d="M28 66 Q28 26 62 26 Q96 26 96 66 Z" fill="#43a047"/>
-    ${line('M62 30 V62 M40 44 L84 44 M46 32 L38 60 M78 32 L86 60', '#2e7d32')}
-    <rect x="26" y="64" width="72" height="8" rx="4" fill="#2e7d32"/>
-    ${eye(99, 52)}`);
-  const shrimp = () => svg(`
-    ${line('M22 26 Q12 14 4 12 M30 24 Q34 14 42 12', '#ff8a65', 2.5)}
-    ${line('M30 40 Q72 28 88 60 Q96 82 76 90', '#ff8a65', 16)}
-    ${line('M58 40 V52 M78 66 L72 78', '#fff3e0', 4)}
-    <path d="M74 88 L62 104 L84 104 Z" fill="#ff8a65"/>
-    <circle cx="30" cy="40" r="14" fill="#ff8a65"/>
-    ${eye(26, 36)}${cheek(34, 48)}`);
-  const crab = () => svg(`
-    ${line('M36 74 L18 84 M38 84 L24 98 M46 90 L38 104 M84 74 L102 84 M82 84 L96 98 M74 90 L82 104', '#e64a19', 5)}
-    ${line('M40 60 Q22 58 16 42 M80 60 Q98 58 104 42', '#e64a19', 6)}
-    <circle cx="14" cy="36" r="11" fill="#ff7043"/>
-    <circle cx="106" cy="36" r="11" fill="#ff7043"/>
-    ${line('M52 66 L50 46 M68 66 L70 46', '#ff7043', 4)}
-    <ellipse cx="60" cy="78" rx="36" ry="20" fill="#ff7043"/>
-    ${eye(50, 44)}${eye(70, 44)}${cheek(42, 82)}${cheek(78, 82)}${smile(60, 84)}`);
-  const trex = () => svg(`
-    ${line('M26 86 Q8 78 6 58', '#66bb6a', 12)}
-    <rect x="46" y="76" width="14" height="30" rx="7" fill="#66bb6a"/>
-    <rect x="68" y="76" width="14" height="30" rx="7" fill="#66bb6a"/>
-    <path d="M30 60 Q32 44 56 46 L82 46 Q92 46 90 62 L84 82 H38 Q28 78 30 60 Z" fill="#66bb6a"/>
-    ${line('M76 60 L84 68 L80 72', '#66bb6a', 5)}
-    <ellipse cx="92" cy="34" rx="20" ry="16" fill="#66bb6a"/>
-    <circle cx="46" cy="58" r="3" fill="#43a047"/><circle cx="60" cy="54" r="3" fill="#43a047"/><circle cx="58" cy="68" r="2.5" fill="#43a047"/>
-    ${eye(88, 30)}${smile(96, 42)}`);
-  const whale = () => svg(`
-    ${line('M66 32 V18 M74 32 L80 20 M58 32 L52 20', '#81d4fa', 3)}
-    <path d="M22 68 L4 50 L8 76 Z" fill="#29b6f6"/>
-    <path d="M22 68 Q30 34 66 36 Q96 38 100 62 Q102 80 80 84 Q50 90 22 68 Z" fill="#4fc3f7"/>
-    <path d="M40 74 Q64 90 92 72 Q76 86 40 74 Z" fill="#e1f5fe"/>
-    <path d="M58 80 Q52 94 46 96 Q50 84 56 76 Z" fill="#29b6f6"/>
-    ${eye(88, 56)}${cheek(80, 68)}`);
-  const caterpillar = () => svg(`
-    ${line('M26 96 L22 106 M48 88 L44 100 M74 80 L72 94', '#7cb342', 4)}
-    <circle cx="26" cy="80" r="14" fill="#aed581"/>
-    <circle cx="48" cy="70" r="15" fill="#aed581"/>
-    <circle cx="72" cy="60" r="16" fill="#aed581"/>
-    <circle cx="48" cy="68" r="3" fill="#7cb342"/><circle cx="72" cy="58" r="3" fill="#7cb342"/><circle cx="24" cy="80" r="3" fill="#7cb342"/>
-    ${line('M86 34 Q82 18 76 14 M98 34 Q102 18 108 14', '#558b2f', 2.5)}
-    <circle cx="76" cy="14" r="3" fill="#558b2f"/><circle cx="108" cy="14" r="3" fill="#558b2f"/>
-    <circle cx="92" cy="46" r="20" fill="#8bc34a"/>
-    ${eye(88, 42)}${eye(100, 42)}${cheek(84, 52)}${smile(94, 52)}`);
-  const bat = () => svg(`
-    <path d="M60 58 Q42 30 10 40 Q22 50 14 62 Q28 60 38 72 Q50 64 60 74 Q70 64 82 72 Q92 60 106 62 Q98 50 110 40 Q78 30 60 58 Z" fill="#7e57c2"/>
-    <path d="M52 52 L48 38 L58 46 Z M68 52 L72 38 L62 46 Z" fill="#5e35b1"/>
-    <ellipse cx="60" cy="66" rx="13" ry="16" fill="#5e35b1"/>
-    <circle cx="54" cy="62" r="3" fill="#ffeb3b"/><circle cx="66" cy="62" r="3" fill="#ffeb3b"/>
-    ${smile(60, 72)}`);
-  const zebra = () => svg(`
-    <g stroke="#3b3b58" stroke-width="3" fill="#fff">
-      <rect x="28" y="78" width="9" height="28" rx="4"/>
-      <rect x="44" y="78" width="9" height="28" rx="4"/>
-      <rect x="66" y="78" width="9" height="28" rx="4"/>
-      <rect x="80" y="78" width="9" height="28" rx="4"/>
-      <rect x="20" y="52" width="70" height="36" rx="18"/>
-      <path d="M78 58 L90 30 L102 34 L94 60 Z"/>
-      <ellipse cx="98" cy="36" rx="13" ry="10"/>
-    </g>
-    ${line('M26 60 V74 M38 58 V76 M52 58 V76 M64 58 V76 M76 56 V70', '#3b3b58', 4)}
-    <path d="M84 30 L80 20 L88 26 L92 18 L96 28 Z" fill="#3b3b58"/>
-    ${eye(100, 34)}`);
-  const watermelon = () => svg(`
-    <path d="M10 46 Q60 118 110 46 Z" fill="#66bb6a"/>
-    <path d="M16 50 Q60 110 104 50 Z" fill="#ff5252"/>
-    <g fill="#3b3b58">
-      <ellipse cx="42" cy="60" rx="2.5" ry="4"/><ellipse cx="60" cy="68" rx="2.5" ry="4"/>
-      <ellipse cx="78" cy="60" rx="2.5" ry="4"/><ellipse cx="60" cy="56" rx="2.5" ry="4"/>
-    </g>`);
-  const cicada = () => svg(`
-    ${line('M52 46 L40 28 M68 46 L80 28 M52 70 L36 80 M68 70 L84 80 M54 84 L46 102 M66 84 L74 102', '#5d4037')}
-    <ellipse cx="44" cy="46" rx="20" ry="28" fill="#e0f7fa" stroke="#90a4ae" stroke-width="2" transform="rotate(-18 44 46)"/>
-    <ellipse cx="76" cy="46" rx="20" ry="28" fill="#e0f7fa" stroke="#90a4ae" stroke-width="2" transform="rotate(18 76 46)"/>
-    <ellipse cx="60" cy="72" rx="14" ry="26" fill="#8d9e4c"/>
-    <circle cx="60" cy="40" r="11" fill="#8d9e4c"/>
-    <circle cx="55" cy="38" r="4" fill="#e53935"/><circle cx="65" cy="38" r="4" fill="#e53935"/>
-    ${line('M56 74 H64 M56 84 H64 M56 94 H64', '#5d4037', 2)}`);
-  const cloud = () => svg(`
-    <circle cx="90" cy="30" r="14" fill="#ffd54f"/>
-    <path d="M28 84 Q12 84 16 70 Q20 56 38 60 Q42 42 62 46 Q78 34 88 50 Q106 50 104 68 Q112 80 96 84 Z" fill="#fff" stroke="#90caf9" stroke-width="3" stroke-linejoin="round"/>
-    ${eye(50, 70)}${eye(72, 70)}${cheek(42, 78)}${cheek(80, 78)}${smile(61, 78)}`);
-  const egg = () => svg(`
-    <ellipse cx="60" cy="64" rx="34" ry="42" fill="#fff3e0" stroke="#ffcc80" stroke-width="3"/>
-    <g fill="#ffcc80">
-      <circle cx="44" cy="48" r="5"/><circle cx="72" cy="44" r="4"/><circle cx="58" cy="70" r="6"/>
-      <circle cx="80" cy="76" r="4"/><circle cx="42" cy="88" r="3.5"/>
-    </g>`);
-  const butterfly = () => svg(`
-    <path d="M58 60 Q30 20 12 36 Q6 56 56 62 Z" fill="#ff8a65"/>
-    <path d="M62 60 Q90 20 108 36 Q114 56 64 62 Z" fill="#ff8a65"/>
-    <path d="M58 66 Q30 66 24 88 Q42 102 56 78 Z" fill="#ffb74d"/>
-    <path d="M62 66 Q90 66 96 88 Q78 102 64 78 Z" fill="#ffb74d"/>
-    <circle cx="30" cy="40" r="6" fill="#fff"/><circle cx="90" cy="40" r="6" fill="#fff"/>
-    <circle cx="36" cy="82" r="4" fill="#fff"/><circle cx="84" cy="82" r="4" fill="#fff"/>
-    ${line('M58 42 Q50 24 42 22 M62 42 Q70 24 78 22', '#3b3b58', 2)}
-    <rect x="56" y="40" width="8" height="50" rx="4" fill="#3b3b58"/>`);
-  const ladybug = () => svg(`
-    ${line('M52 26 Q44 14 36 14 M68 26 Q76 14 84 14', '#3b3b58', 2.5)}
-    ${line('M36 62 L18 56 M36 76 L14 76 M38 90 L20 98 M84 62 L102 56 M84 76 L106 76 M82 90 L100 98', '#3b3b58')}
-    <ellipse cx="60" cy="70" rx="36" ry="32" fill="#e53935"/>
-    ${line('M60 40 V102', '#3b3b58')}
-    <circle cx="60" cy="36" r="14" fill="#3b3b58"/>
-    <circle cx="54" cy="34" r="4" fill="#fff"/><circle cx="66" cy="34" r="4" fill="#fff"/>
-    <g fill="#3b3b58"><circle cx="42" cy="62" r="6"/><circle cx="78" cy="62" r="6"/><circle cx="40" cy="84" r="5"/><circle cx="80" cy="84" r="5"/></g>`);
-  const lizard = () => svg(`
-    ${line('M26 70 Q8 80 6 98', '#9ccc65', 8)}
-    ${line('M46 64 L36 84 M46 64 L56 84 M76 62 L70 84 M76 62 L88 80', '#9ccc65', 7)}
-    ${line('M22 70 Q40 52 62 60 Q82 66 96 56', '#9ccc65', 16)}
-    <g fill="#7cb342"><circle cx="50" cy="64" r="3"/><circle cx="66" cy="62" r="3"/><circle cx="34" cy="68" r="3"/></g>
-    <ellipse cx="102" cy="52" rx="14" ry="11" fill="#9ccc65"/>
-    ${eye(106, 48)}${cheek(100, 60)}`);
-  const rainbow = () => svg(`
-    ${[['#ef5350', 46], ['#ffa726', 38], ['#ffee58', 30], ['#66bb6a', 22], ['#42a5f5', 14]]
-      .map(([c, r]) => line(`M${60 - r} 92 A${r} ${r} 0 0 1 ${60 + r} 92`, c, 8)).join('')}
-    <g fill="#fff"><circle cx="16" cy="96" r="12"/><circle cx="104" cy="96" r="12"/></g>`);
-  const teddy = () => svg(`
-    <circle cx="34" cy="34" r="12" fill="#a1887f"/><circle cx="86" cy="34" r="12" fill="#a1887f"/>
-    <circle cx="34" cy="34" r="6" fill="#d7ccc8"/><circle cx="86" cy="34" r="6" fill="#d7ccc8"/>
-    <ellipse cx="60" cy="88" rx="28" ry="24" fill="#a1887f"/>
-    <ellipse cx="60" cy="96" rx="16" ry="13" fill="#efebe9"/>
-    <circle cx="60" cy="50" r="28" fill="#a1887f"/>
-    <ellipse cx="60" cy="60" rx="14" ry="11" fill="#efebe9"/>
-    <ellipse cx="60" cy="55" rx="5" ry="3.5" fill="#5d4037"/>
-    ${eye(48, 46)}${eye(72, 46)}${cheek(40, 58)}${cheek(80, 58)}${smile(60, 64)}`);
-  const cat = () => svg(`
-    <path d="M30 56 L34 22 L58 40 Z" fill="#ffb74d"/>
-    <path d="M90 56 L86 22 L62 40 Z" fill="#ffb74d"/>
-    <path d="M36 48 L38 32 L50 42 Z" fill="#ffccbc"/>
-    <path d="M84 48 L82 32 L70 42 Z" fill="#ffccbc"/>
-    <ellipse cx="60" cy="66" rx="36" ry="30" fill="#ffb74d"/>
-    <ellipse cx="60" cy="78" rx="14" ry="9" fill="#fff3e0"/>
-    ${eye(46, 60)}${eye(74, 60)}
-    <path d="M55 72 L65 72 L60 77 Z" fill="#ef9a9a"/>
-    ${line('M52 80 Q56 84 60 78 Q64 84 68 80', '#3b3b58', 2)}
-    ${line('M40 74 L20 70 M40 78 L20 82 M80 74 L100 70 M80 78 L100 82', '#5d4037', 2)}
-    ${cheek(36, 72)}${cheek(84, 72)}`);
-  const car = () => svg(`
-    <rect x="14" y="58" width="92" height="30" rx="12" fill="#4fc3f7"/>
-    <path d="M30 58 L44 36 H78 L92 58 Z" fill="#81d4fa"/>
-    <path d="M48 42 L38 56 H60 V42 Z" fill="#e1f5fe"/>
-    <path d="M66 42 H76 L86 56 H66 Z" fill="#e1f5fe"/>
-    <circle cx="36" cy="88" r="12" fill="#3b3b58"/><circle cx="36" cy="88" r="5" fill="#fff"/>
-    <circle cx="84" cy="88" r="12" fill="#3b3b58"/><circle cx="84" cy="88" r="5" fill="#fff"/>
-    <circle cx="100" cy="68" r="4" fill="#ffee58"/>`);
-  const bee = () => svg(`
-    <ellipse cx="44" cy="36" rx="12" ry="18" fill="#e1f5fe" stroke="#90a4ae" stroke-width="2" transform="rotate(-20 44 36)"/>
-    <ellipse cx="72" cy="36" rx="12" ry="18" fill="#e1f5fe" stroke="#90a4ae" stroke-width="2" transform="rotate(20 72 36)"/>
-    <path d="M94 66 L108 70 L94 74 Z" fill="#3b3b58"/>
-    <ellipse cx="60" cy="70" rx="36" ry="28" fill="#ffca28"/>
-    <rect x="64" y="46" width="9" height="48" fill="#3b3b58"/>
-    <rect x="82" y="56" width="8" height="28" fill="#3b3b58"/>
-    ${line('M34 48 Q28 36 20 34', '#3b3b58', 2.5)}
-    ${eye(36, 62)}${smile(38, 76)}`);
-  const snake = () => svg(`
-    ${line('M14 86 Q30 40 60 64 T104 46', '#66bb6a', 14)}
-    <circle cx="106" cy="44" r="12" fill="#66bb6a"/>
-    <g fill="#c5e1a5"><circle cx="36" cy="66" r="4"/><circle cx="60" cy="64" r="4"/><circle cx="84" cy="56" r="4"/></g>
-    ${eye(109, 40)}${cheek(104, 52)}`);
-  const star = () => svg(`
-    <path d="M60 14 L71.8 43.8 L103.8 45.8 L79 66.2 L87 97.2 L60 80 L33 97.2 L41 66.2 L16.2 45.8 L48.2 43.8 Z" fill="#ffd54f" stroke="#ffb300" stroke-width="3" stroke-linejoin="round"/>
-    ${eye(52, 60)}${eye(68, 60)}${cheek(46, 68)}${cheek(74, 68)}${smile(60, 70)}`);
-  const orange = () => svg(`
-    <circle cx="60" cy="66" r="42" fill="#ffa726"/>
-    <path d="M60 26 Q74 8 92 14 Q82 32 60 26 Z" fill="#66bb6a"/>
-    ${line('M60 26 V20', '#6d4c41', 4)}
-    <circle cx="42" cy="54" r="6" fill="#fff" opacity=".35"/>`);
-  const beetle = () => svg(`
-    ${line('M24 60 L10 52 M24 74 L8 76 M28 88 L16 100 M96 60 L110 52 M96 74 L112 76 M92 88 L104 100', '#33691e')}
-    ${line('M54 36 L44 14 M66 36 L76 14', '#5d4037', 5)}
-    <ellipse cx="60" cy="68" rx="32" ry="34" fill="#7cb342"/>
-    ${line('M60 36 V102', '#33691e')}
-    <circle cx="44" cy="62" r="6" fill="#33691e"/><circle cx="76" cy="62" r="6" fill="#33691e"/>
-    <circle cx="44" cy="84" r="5" fill="#33691e"/><circle cx="76" cy="84" r="5" fill="#33691e"/>
-    <ellipse cx="60" cy="36" rx="14" ry="10" fill="#558b2f"/>
-    <circle cx="54" cy="36" r="3" fill="#fff"/><circle cx="66" cy="36" r="3" fill="#fff"/>`);
-  const peach = () => svg(`
-    <path d="M66 36 Q80 14 98 20 Q90 38 66 36 Z" fill="#66bb6a"/>
-    <path d="M60 40 C30 20 10 60 22 84 C32 104 52 102 60 94 C68 102 88 104 98 84 C110 60 90 20 60 40 Z" fill="#ffab91"/>
-    ${line('M60 44 Q54 70 60 94', '#ff8a65', 2.5)}`);
-  const goat = () => svg(`
-    <g stroke="#8d6e63" stroke-width="3" fill="#fff8e1">
-      <rect x="32" y="84" width="9" height="24" rx="4"/>
-      <rect x="48" y="84" width="9" height="24" rx="4"/>
-      <rect x="68" y="84" width="9" height="24" rx="4"/>
-      <rect x="82" y="84" width="9" height="24" rx="4"/>
-      <ellipse cx="58" cy="72" rx="34" ry="20"/>
-      <path d="M78 66 L90 36 L100 40 L92 66 Z"/>
-      <ellipse cx="96" cy="44" rx="12" ry="10"/>
-    </g>
-    ${line('M90 36 Q88 26 84 22 M100 36 Q104 26 110 24', '#8d6e63')}
-    ${eye(100, 40)}`);
-  const snow = () => svg(`
-    <g stroke="#64b5f6" stroke-width="5" stroke-linecap="round" fill="none">
-      ${[0, 60, 120, 180, 240, 300].map((a) => `<path transform="rotate(${a} 60 60)" d="M60 60 V12 M60 30 L51 21 M60 30 L69 21"/>`).join('')}
-    </g>
-    <circle cx="60" cy="60" r="6" fill="#64b5f6"/>`);
-  const moon = () => svg(`
-    <path d="M74 20 A42 42 0 1 0 96 81 A34 34 0 0 1 74 20 Z" fill="#ffd54f"/>
-    <circle cx="98" cy="28" r="3" fill="#ffd54f"/><circle cx="104" cy="50" r="2.5" fill="#ffd54f"/>`);
-  const otter = () => svg(`
-    <ellipse cx="18" cy="84" rx="12" ry="7" fill="#8d6e63" transform="rotate(-20 18 84)"/>
-    <ellipse cx="54" cy="84" rx="38" ry="18" fill="#8d6e63"/>
-    <ellipse cx="60" cy="90" rx="26" ry="9" fill="#d7ccc8"/>
-    <circle cx="90" cy="60" r="18" fill="#8d6e63"/>
-    <circle cx="82" cy="46" r="5" fill="#8d6e63"/>
-    <ellipse cx="100" cy="68" rx="9" ry="7" fill="#d7ccc8"/>
-    <circle cx="105" cy="66" r="2.5" fill="#3b3b58"/>
-    ${eye(92, 58)}`);
-  const apple = () => svg(`
-    <path d="M60 38 C40 28 14 34 16 62 C18 92 40 110 60 100 C80 110 102 92 104 62 C106 34 80 28 60 38 Z" fill="#ef5350"/>
-    <path d="M62 36 Q66 16 84 12 Q80 30 62 36 Z" fill="#66bb6a"/>
-    ${line('M60 38 Q60 26 66 16', '#6d4c41', 4)}
-    <ellipse cx="36" cy="62" rx="5" ry="10" fill="#fff" opacity=".4" transform="rotate(15 36 62)"/>`);
-  const gem = () => svg(`
-    <polygon points="60,16 98,46 60,108 22,46" fill="#7986cb" stroke="#3949ab" stroke-width="3" stroke-linejoin="round"/>
-    ${line('M22 46 H98 M60 16 L44 46 L60 108 L76 46 Z', '#c5cae9', 2)}
-    <polygon points="60,16 76,46 44,46" fill="#9fa8da" opacity=".6"/>`);
-  const lemon = () => svg(`
-    <ellipse cx="14" cy="62" rx="10" ry="8" fill="#fff176"/>
-    <ellipse cx="106" cy="62" rx="10" ry="8" fill="#fff176"/>
-    <ellipse cx="60" cy="64" rx="46" ry="34" fill="#ffee58"/>
-    <path d="M70 32 Q82 12 100 18 Q92 34 70 32 Z" fill="#66bb6a"/>
-    <ellipse cx="40" cy="50" rx="8" ry="4" fill="#fff" opacity=".5" transform="rotate(-20 40 50)"/>`);
-  const rocket = () => svg(`
-    <path d="M50 90 Q60 116 70 90 Z" fill="#ffa726"/>
-    <path d="M46 72 L28 92 L46 90 Z" fill="#ef5350"/>
-    <path d="M74 72 L92 92 L74 90 Z" fill="#ef5350"/>
-    <path d="M60 10 C78 28 80 66 74 90 H46 C40 66 42 28 60 10 Z" fill="#eceff1" stroke="#90a4ca" stroke-width="2"/>
-    ${line('M44 70 H76', '#ef5350', 4)}
-    <circle cx="60" cy="48" r="10" fill="#4fc3f7" stroke="#3b3b58" stroke-width="3"/>`);
-  const croc = () => svg(`
-    <path d="M14 70 Q2 64 8 52 Q14 64 22 66 Z" fill="#aed581"/>
-    <g fill="#aed581">
-      <rect x="28" y="82" width="12" height="18" rx="6"/>
-      <rect x="66" y="82" width="12" height="18" rx="6"/>
-      <rect x="14" y="58" width="82" height="30" rx="14"/>
-      <path d="M84 60 Q100 56 110 66 Q104 74 84 76 Z"/>
-    </g>
-    <g fill="#7cb342"><circle cx="34" cy="70" r="3"/><circle cx="50" cy="66" r="3"/><circle cx="66" cy="70" r="3"/></g>
-    ${eye(94, 62)}`);
-  const bag = () => svg(`
-    ${line('M42 44 Q42 22 60 22 Q78 22 78 44', '#8d6e63', 6)}
-    <rect x="22" y="40" width="76" height="62" rx="14" fill="#ff8a65"/>
-    <path d="M22 56 H98 V70 Q60 80 22 70 Z" fill="#e64a19"/>
-    <rect x="54" y="66" width="12" height="12" rx="3" fill="#ffd54f"/>`);
-  const ship = () => svg(`
-    ${line('M60 52 V16', '#5d4037', 4)}
-    <path d="M60 18 L86 26 L60 34 Z" fill="#ef5350"/>
-    <rect x="38" y="48" width="44" height="26" rx="4" fill="#fff"/>
-    <path d="M14 74 H106 L94 96 H28 Z" fill="#5c6bc0"/>
-    <circle cx="50" cy="60" r="5" fill="#4fc3f7"/><circle cx="70" cy="60" r="5" fill="#4fc3f7"/>
-    ${line('M8 106 Q18 100 28 106 T48 106 T68 106 T88 106 T108 106', '#4fc3f7', 4)}`);
-
-  const onigiri = () => svg(`
-    <path d="M60 18 C82 18 100 48 102 80 Q102 100 82 100 H38 Q18 100 18 80 C20 48 38 18 60 18 Z" fill="#fffdf5" stroke="#ffe0b2" stroke-width="3"/>
-    <path d="M24 72 H96 V96 Q96 102 90 102 H30 Q24 102 24 96 Z" fill="#37474f"/>
-    ${eye(48, 54)}${eye(72, 54)}${cheek(40, 66)}${cheek(80, 66)}${smile(60, 62)}`);
-  const sled = () => svg(`
-    ${line('M14 96 Q60 108 106 90', '#90a4ae', 6)}
-    <path d="M26 58 H94 Q100 58 98 66 L92 84 H32 Q26 84 26 78 Z" fill="#ef5350"/>
-    ${line('M34 84 L30 96 M86 84 L90 96', '#90a4ae', 4)}
-    ${line('M30 70 H92', '#ffcdd2', 3)}
-    ${line('M98 66 Q108 58 112 44', '#8d6e63', 2.5)}`);
-  const eggplant = () => svg(`
-    <path d="M74 40 C100 50 98 96 68 104 C44 110 24 92 28 66 C32 46 58 36 74 40 Z" fill="#7e57c2"/>
-    <ellipse cx="44" cy="70" rx="5" ry="12" fill="#fff" opacity=".3" transform="rotate(20 44 70)"/>
-    <path d="M46 40 Q60 28 76 38 Q84 46 70 48 Q60 42 52 52 Q42 46 46 40 Z" fill="#66bb6a"/>
-    ${line('M72 40 Q80 26 92 18', '#558b2f', 4)}`);
-  const glue = () => svg(`
-    <rect x="36" y="40" width="48" height="62" rx="8" fill="#fff" stroke="#b0bec5" stroke-width="3"/>
-    <rect x="36" y="24" width="48" height="20" rx="6" fill="#42a5f5"/>
-    <rect x="36" y="62" width="48" height="22" fill="#ff8a65"/>
-    <rect x="44" y="102" width="32" height="8" rx="3" fill="#b0bec5"/>
-    ${line('M50 72 H70', '#fff', 3)}`);
-  const pillow = () => svg(`
-    <g transform="rotate(-8 60 66)">
-      <rect x="12" y="40" width="96" height="56" rx="24" fill="#fff8e1" stroke="#ffe082" stroke-width="3"/>
-      <g fill="#ffe082"><circle cx="34" cy="62" r="3"/><circle cx="60" cy="58" r="3"/><circle cx="86" cy="62" r="3"/><circle cx="46" cy="78" r="3"/><circle cx="74" cy="78" r="3"/></g>
-    </g>
-    ${line('M36 66 Q42 72 48 66 M72 66 Q78 72 84 66', '#3b3b58', 2.5)}
-    ${cheek(40, 84)}${cheek(80, 84)}`);
-  const centipede = () => svg(`
-    ${[20, 36, 52, 68, 84].map((x, i) => {
-      const y = i % 2 ? 62 : 70;
-      return line(`M${x} ${y - 8} L${x - 6} ${y - 20} M${x} ${y + 8} L${x - 6} ${y + 20}`, '#8d6e63', 3)
-        + `<circle cx="${x}" cy="${y}" r="10" fill="#ef6c00"/>`;
-    }).join('')}
-    <circle cx="100" cy="60" r="12" fill="#d84315"/>
-    ${line('M104 50 Q110 36 116 30 M104 70 Q110 84 116 90', '#5d4037', 2.5)}
-    ${eye(102, 56)}`);
-  const hop = () => svg(`
-    ${line('M32 60 L16 42 M88 60 L104 42', '#ffb74d', 6)}
-    ${line('M14 84 Q8 72 14 60 M106 84 Q112 72 106 60', '#ffcc80', 3)}
-    <circle cx="60" cy="60" r="30" fill="#ffb74d"/>
-    ${eye(50, 56)}${eye(70, 56)}${cheek(44, 68)}${cheek(76, 68)}${smile(60, 70)}
-    ${line('M46 94 L40 106 M74 94 L80 106', '#ffb74d', 5)}`);
-  const rurihoshi = () => svg(`
-    ${line('M36 44 Q18 24 8 16 M46 40 Q46 22 58 12', '#1a237e', 3)}
-    ${line('M42 96 L36 108 M60 98 L60 110 M80 96 L86 108 M30 80 L16 90 M96 80 L106 90', '#1a237e', 3)}
-    <ellipse cx="66" cy="68" rx="30" ry="28" fill="#283593"/>
-    <circle cx="36" cy="52" r="13" fill="#283593"/>
-    <g fill="#64b5f6"><circle cx="54" cy="58" r="5"/><circle cx="76" cy="54" r="5"/><circle cx="90" cy="72" r="5"/><circle cx="60" cy="80" r="5"/><circle cx="78" cy="92" r="4"/></g>
-    <circle cx="32" cy="48" r="3" fill="#fff"/>`);
-
-  return {
-    あ: ant(), い: squid(), う: turtle(), え: shrimp(), お: onigiri(),
-    か: crab(), き: trex(), く: whale(), け: caterpillar(), こ: bat(),
-    さ: fish('#ff8a65', '#ffe0b2', '#e64a19'), し: zebra(), す: watermelon(), せ: cicada(), そ: sled(),
-    た: egg(), ち: butterfly(), つ: bird('#3949ac', '#283593', '#ff9800'), て: ladybug(), と: lizard(),
-    な: eggplant(), に: rainbow(), ぬ: teddy(), ね: cat(), の: glue(),
-    は: bee(), ひ: bird('#ffe082', '#ffb300', '#ff9800'), ふ: ship(), へ: snake(), ほ: star(),
-    ま: pillow(), み: orange(), む: centipede(),
-    め: fish('#ffab91', '#fff3e0', '#ff7043', 0.8), も: peach(), や: goat(), ゆ: snow(), よ: hop(),
-    ら: otter(), り: apple(), る: rurihoshi(), れ: lemon(), ろ: rocket(), わ: croc(), ん: bag(),
-  };
-})();
+// イラスト（写真風の画像）。ひらがなごとに1枚ずつ用意している
+const ART = {
+  'あ': '<img src="illust/a.png" alt="">',
+  'い': '<img src="illust/i.png" alt="">',
+  'う': '<img src="illust/u.png" alt="">',
+  'え': '<img src="illust/e.png" alt="">',
+  'お': '<img src="illust/o.png" alt="">',
+  'か': '<img src="illust/ka.png" alt="">',
+  'き': '<img src="illust/ki.png" alt="">',
+  'く': '<img src="illust/ku.png" alt="">',
+  'け': '<img src="illust/ke.png" alt="">',
+  'こ': '<img src="illust/ko.png" alt="">',
+  'さ': '<img src="illust/sa.png" alt="">',
+  'し': '<img src="illust/shi.png" alt="">',
+  'す': '<img src="illust/su.png" alt="">',
+  'せ': '<img src="illust/se.png" alt="">',
+  'そ': '<img src="illust/so.png" alt="">',
+  'た': '<img src="illust/ta.png" alt="">',
+  'ち': '<img src="illust/chi.png" alt="">',
+  'つ': '<img src="illust/tsu.png" alt="">',
+  'て': '<img src="illust/te.png" alt="">',
+  'と': '<img src="illust/to.png" alt="">',
+  'な': '<img src="illust/na.png" alt="">',
+  'に': '<img src="illust/ni.png" alt="">',
+  'ぬ': '<img src="illust/nu.png" alt="">',
+  'ね': '<img src="illust/ne.png" alt="">',
+  'の': '<img src="illust/no.png" alt="">',
+  'は': '<img src="illust/ha.png" alt="">',
+  'ひ': '<img src="illust/hi.png" alt="">',
+  'ふ': '<img src="illust/fu.png" alt="">',
+  'へ': '<img src="illust/he.png" alt="">',
+  'ほ': '<img src="illust/ho.png" alt="">',
+  'ま': '<img src="illust/ma.png" alt="">',
+  'み': '<img src="illust/mi.png" alt="">',
+  'む': '<img src="illust/mu.png" alt="">',
+  'め': '<img src="illust/me.png" alt="">',
+  'も': '<img src="illust/mo.png" alt="">',
+  'や': '<img src="illust/ya.png" alt="">',
+  'ゆ': '<img src="illust/yu.png" alt="">',
+  'よ': '<img src="illust/yo.png" alt="">',
+  'ら': '<img src="illust/ra.png" alt="">',
+  'り': '<img src="illust/ri.png" alt="">',
+  'る': '<img src="illust/ru.png" alt="">',
+  'れ': '<img src="illust/re.png" alt="">',
+  'ろ': '<img src="illust/ro.png" alt="">',
+  'わ': '<img src="illust/wa.png" alt="">',
+  'ん': '<img src="illust/n.png" alt="">',
+};
 
 // [ひらがな, ことば, せかい]
 const RAW = [
