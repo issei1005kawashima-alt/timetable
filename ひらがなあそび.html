@@ -503,37 +503,88 @@ const ART = (() => {
     <circle cx="50" cy="60" r="5" fill="#4fc3f7"/><circle cx="70" cy="60" r="5" fill="#4fc3f7"/>
     ${line('M8 106 Q18 100 28 106 T48 106 T68 106 T88 106 T108 106', '#4fc3f7', 4)}`);
 
+  const onigiri = () => svg(`
+    <path d="M60 18 C82 18 100 48 102 80 Q102 100 82 100 H38 Q18 100 18 80 C20 48 38 18 60 18 Z" fill="#fffdf5" stroke="#ffe0b2" stroke-width="3"/>
+    <path d="M24 72 H96 V96 Q96 102 90 102 H30 Q24 102 24 96 Z" fill="#37474f"/>
+    ${eye(48, 54)}${eye(72, 54)}${cheek(40, 66)}${cheek(80, 66)}${smile(60, 62)}`);
+  const sled = () => svg(`
+    ${line('M14 96 Q60 108 106 90', '#90a4ae', 6)}
+    <path d="M26 58 H94 Q100 58 98 66 L92 84 H32 Q26 84 26 78 Z" fill="#ef5350"/>
+    ${line('M34 84 L30 96 M86 84 L90 96', '#90a4ae', 4)}
+    ${line('M30 70 H92', '#ffcdd2', 3)}
+    ${line('M98 66 Q108 58 112 44', '#8d6e63', 2.5)}`);
+  const eggplant = () => svg(`
+    <path d="M74 40 C100 50 98 96 68 104 C44 110 24 92 28 66 C32 46 58 36 74 40 Z" fill="#7e57c2"/>
+    <ellipse cx="44" cy="70" rx="5" ry="12" fill="#fff" opacity=".3" transform="rotate(20 44 70)"/>
+    <path d="M46 40 Q60 28 76 38 Q84 46 70 48 Q60 42 52 52 Q42 46 46 40 Z" fill="#66bb6a"/>
+    ${line('M72 40 Q80 26 92 18', '#558b2f', 4)}`);
+  const glue = () => svg(`
+    <rect x="36" y="40" width="48" height="62" rx="8" fill="#fff" stroke="#b0bec5" stroke-width="3"/>
+    <rect x="36" y="24" width="48" height="20" rx="6" fill="#42a5f5"/>
+    <rect x="36" y="62" width="48" height="22" fill="#ff8a65"/>
+    <rect x="44" y="102" width="32" height="8" rx="3" fill="#b0bec5"/>
+    ${line('M50 72 H70', '#fff', 3)}`);
+  const pillow = () => svg(`
+    <g transform="rotate(-8 60 66)">
+      <rect x="12" y="40" width="96" height="56" rx="24" fill="#fff8e1" stroke="#ffe082" stroke-width="3"/>
+      <g fill="#ffe082"><circle cx="34" cy="62" r="3"/><circle cx="60" cy="58" r="3"/><circle cx="86" cy="62" r="3"/><circle cx="46" cy="78" r="3"/><circle cx="74" cy="78" r="3"/></g>
+    </g>
+    ${line('M36 66 Q42 72 48 66 M72 66 Q78 72 84 66', '#3b3b58', 2.5)}
+    ${cheek(40, 84)}${cheek(80, 84)}`);
+  const centipede = () => svg(`
+    ${[20, 36, 52, 68, 84].map((x, i) => {
+      const y = i % 2 ? 62 : 70;
+      return line(`M${x} ${y - 8} L${x - 6} ${y - 20} M${x} ${y + 8} L${x - 6} ${y + 20}`, '#8d6e63', 3)
+        + `<circle cx="${x}" cy="${y}" r="10" fill="#ef6c00"/>`;
+    }).join('')}
+    <circle cx="100" cy="60" r="12" fill="#d84315"/>
+    ${line('M104 50 Q110 36 116 30 M104 70 Q110 84 116 90', '#5d4037', 2.5)}
+    ${eye(102, 56)}`);
+  const hop = () => svg(`
+    ${line('M32 60 L16 42 M88 60 L104 42', '#ffb74d', 6)}
+    ${line('M14 84 Q8 72 14 60 M106 84 Q112 72 106 60', '#ffcc80', 3)}
+    <circle cx="60" cy="60" r="30" fill="#ffb74d"/>
+    ${eye(50, 56)}${eye(70, 56)}${cheek(44, 68)}${cheek(76, 68)}${smile(60, 70)}
+    ${line('M46 94 L40 106 M74 94 L80 106', '#ffb74d', 5)}`);
+  const rurihoshi = () => svg(`
+    ${line('M36 44 Q18 24 8 16 M46 40 Q46 22 58 12', '#1a237e', 3)}
+    ${line('M42 96 L36 108 M60 98 L60 110 M80 96 L86 108 M30 80 L16 90 M96 80 L106 90', '#1a237e', 3)}
+    <ellipse cx="66" cy="68" rx="30" ry="28" fill="#283593"/>
+    <circle cx="36" cy="52" r="13" fill="#283593"/>
+    <g fill="#64b5f6"><circle cx="54" cy="58" r="5"/><circle cx="76" cy="54" r="5"/><circle cx="90" cy="72" r="5"/><circle cx="60" cy="80" r="5"/><circle cx="78" cy="92" r="4"/></g>
+    <circle cx="32" cy="48" r="3" fill="#fff"/>`);
+
   return {
-    あ: ant(), い: squid(), う: turtle(), え: shrimp(), お: fish('#4fc3f7', '#e1f5fe', '#0288d1', 1.05),
+    あ: ant(), い: squid(), う: turtle(), え: shrimp(), お: onigiri(),
     か: crab(), き: trex(), く: whale(), け: caterpillar(), こ: bat(),
-    さ: fish('#ff8a65', '#ffe0b2', '#e64a19'), し: zebra(), す: watermelon(), せ: cicada(), そ: cloud(),
+    さ: fish('#ff8a65', '#ffe0b2', '#e64a19'), し: zebra(), す: watermelon(), せ: cicada(), そ: sled(),
     た: egg(), ち: butterfly(), つ: bird('#3949ac', '#283593', '#ff9800'), て: ladybug(), と: lizard(),
-    な: fish('#8d6e63', '#d7ccc8', '#6d4c41', 1, true), に: rainbow(), ぬ: teddy(), ね: cat(), の: car(),
+    な: eggplant(), に: rainbow(), ぬ: teddy(), ね: cat(), の: glue(),
     は: bee(), ひ: bird('#ffe082', '#ffb300', '#ff9800'), ふ: ship(), へ: snake(), ほ: star(),
-    ま: fish('#5c6bc0', '#c5cae9', '#3949ab', 1.1), み: orange(), む: beetle(),
-    め: fish('#ffab91', '#fff3e0', '#ff7043', 0.8), も: peach(), や: goat(), ゆ: snow(), よ: moon(),
-    ら: otter(), り: apple(), る: gem(), れ: lemon(), ろ: rocket(), わ: croc(), ん: bag(),
+    ま: pillow(), み: orange(), む: centipede(),
+    め: fish('#ffab91', '#fff3e0', '#ff7043', 0.8), も: peach(), や: goat(), ゆ: snow(), よ: hop(),
+    ら: otter(), り: apple(), る: rurihoshi(), れ: lemon(), ろ: rocket(), わ: croc(), ん: bag(),
   };
 })();
 
 // [ひらがな, ことば, せかい]
 const RAW = [
   ['あ', 'あり', 'mushi'], ['い', 'いか', 'sakana'], ['う', 'うみがめ', 'sakana'],
-  ['え', 'えび', 'sakana'], ['お', 'おさかな', 'sakana'],
+  ['え', 'えび', 'sakana'], ['お', 'おにぎり', 'other'],
   ['か', 'かに', 'sakana'], ['き', 'きょうりゅう', 'kyoryu'], ['く', 'くじら', 'sakana'],
   ['け', 'けむし', 'mushi'], ['こ', 'こうもり', 'other'],
   ['さ', 'さかな', 'sakana'], ['し', 'しまうま', 'other'], ['す', 'すいか', 'other'],
-  ['せ', 'せみ', 'mushi'], ['そ', 'そら', 'other'],
+  ['せ', 'せみ', 'mushi'], ['そ', 'そり', 'other'],
   ['た', 'たまご', 'kyoryu'], ['ち', 'ちょう', 'mushi'], ['つ', 'つばめ', 'other'],
   ['て', 'てんとうむし', 'mushi'], ['と', 'とかげ', 'kyoryu'],
-  ['な', 'なまず', 'sakana'], ['に', 'にじ', 'other'], ['ぬ', 'ぬいぐるみ', 'other'],
-  ['ね', 'ねこ', 'other'], ['の', 'のりもの', 'other'],
+  ['な', 'なす', 'other'], ['に', 'にじ', 'other'], ['ぬ', 'ぬいぐるみ', 'other'],
+  ['ね', 'ねこ', 'other'], ['の', 'のり', 'other'],
   ['は', 'はち', 'mushi'], ['ひ', 'ひよこ', 'other'], ['ふ', 'ふね', 'other'],
   ['へ', 'へび', 'other'], ['ほ', 'ほし', 'other'],
-  ['ま', 'まぐろ', 'sakana'], ['み', 'みかん', 'other'], ['む', 'むし', 'mushi'],
+  ['ま', 'まくら', 'other'], ['み', 'みかん', 'other'], ['む', 'むかで', 'mushi'],
   ['め', 'めだか', 'sakana'], ['も', 'もも', 'other'],
-  ['や', 'やぎ', 'other'], ['ゆ', 'ゆき', 'other'], ['よ', 'よる', 'other'],
-  ['ら', 'らっこ', 'other'], ['り', 'りんご', 'other'], ['る', 'るり', 'other'], ['れ', 'れもん', 'other'], ['ろ', 'ろけっと', 'other'],
+  ['や', 'やぎ', 'other'], ['ゆ', 'ゆき', 'other'], ['よ', 'よっと', 'other'],
+  ['ら', 'らっこ', 'other'], ['り', 'りんご', 'other'], ['る', 'ルリボシカミキリ', 'mushi'], ['れ', 'れもん', 'other'], ['ろ', 'ろけっと', 'other'],
   ['わ', 'わに', 'kyoryu'], ['ん', 'かばん', 'other'],
 ];
 const CHARS = RAW.map(([kana, word, world]) => ({ kana, word, world }));
